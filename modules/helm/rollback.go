@@ -15,6 +15,7 @@ func Rollback(t testing.TestingT, options *Options, releaseName string, revision
 func RollbackE(t testing.TestingT, options *Options, releaseName string, revision string) error {
 	var err error
 	args := []string{}
+	args = append(args, getNamespaceArgs(options)...)
 	args = append(args, releaseName, revision)
 	_, err = RunHelmCommandAndGetOutputE(t, options, "rollback", args...)
 	return err
