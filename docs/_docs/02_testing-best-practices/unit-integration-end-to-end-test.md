@@ -86,7 +86,7 @@ func TestWebServer(t *testing.T) {
     Validators: []terraform.Validator{
       // A list of validation functions to test your module
       validateWebServer,
-      valudateImageHosting,
+      validateImageHosting,
       validateSSLApplied,
     },
   })
@@ -111,7 +111,7 @@ func TestWebServer(t *testing.T) {
     Validators: []terraform.Validator{
       // A list of validation functions to test your module
       validateWebServer,
-      valudateImageHosting,
+      validateImageHosting,
       validateSSLApplied,
     },
   })
@@ -161,7 +161,7 @@ type IntegrationTestValidator func(t *testing.T, allModuleOutputs *terraform.All
 
 type IntegrationTestPlan struct {
   Modules []*ModuleUnderTest
-  // If you do not provide a working directory it will default to ./.terratest-unit-test/TEST_FUNCTION_NAME/
+  // If you do not provide a working directory it will default to ./.terratest-integration-test/TEST_FUNCTION_NAME/
   WorkingDirectory string
   Setup func(t *testing.T, workingDir string)
   TearDown func(t *testing.T, allModuleOutputs *terraform.AllModuleOutputs, workingDir string)
