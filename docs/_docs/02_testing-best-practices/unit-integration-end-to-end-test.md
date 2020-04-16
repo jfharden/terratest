@@ -42,6 +42,10 @@ by setting env var SKIP_\<stage_name\> to any value.
 
 If you skip the init_apply step then UnitTest will automatically load your previously applied outputs from the working directory.
 
+It's common to need to pass data around between validators (for example the awsRegion, or random names you generated to
+namespace that test run), so the validation function also receives an arg testData (which is defined as the [empty interface](https://tour.golang.org/methods/14)). You can define your own struct to pass data around
+and cast this argument back to your struct to ensure type safety and give you access to shared data between tests.
+
 The full list of stages is:
 
 * setup
@@ -57,7 +61,7 @@ Signature of UnitTest:
 type ModuleOutputs map[string]interface{}
 
 // A validation function to test your terraform code
-type Validator func(t *testing.T, moduleOutputs terraform.ModuleOutputs, workingDir string)
+type Validator func(t *testing.T, moduleOutputs terraform.ModuleOutputs, testData interface{}, workingDir string)
 
 type UnitTestConfig struct {
   TerraformOptions *terraform.Options
@@ -66,6 +70,7 @@ type UnitTestConfig struct {
   Setup func(t *testing.T, workingDir string)
   TearDown func(t *testing.T, moduleOutputs terraform.ModuleOutputs, workingDir string)
   Validators []Validator
+  TestData interface{}
 }
 
 func UnitTest(t *testing.T, testConfig *terraform.UnitTestConfig)
@@ -92,22 +97,41 @@ func TestWebServer(t *testing.T) {
   })
 }
 
-func validateWebServer(t *testing.T, outputs terraform.ModuleOutputs, workingDir string) {
+func validateWebServer(t *testing.T, outputs terraform.ModuleOutputs, testDataStruct interface{}, workingDir string) {
 }
 ```
 
-This example shows using Setup and Validators, with a custom working directory
+This example shows using Setup and Validators, and passing some testData around, with a custom working directory
 ```go
+type TestData struct {
+  Name string
+  AwsRegion string
+}
+
 func TestWebServer(t *testing.T) {
+  testData := &TestData{
+    Name: random.UniqueId()
+    AwsRegion: aws.GetRandomStableRegion(t, nil, nil)
+  }
+
   terraformOptions := &terraform.Options {
     // The path to where your Terraform code is located
     TerraformDir: "../web-server",
+
+    Vars: map[string]interface{}{
+      "Name": testData.Name
+    }
+
+    EnvVars: map[string]string{
+      "AWS_DEFAULT_REGION": testData.AwsRegion,
+    },
   }
 
   terrform.UnitTest(&terraform.UnitTestConfig{
     TerraformOptions: terraformOptions,
     WorkingDirectory "../web-server",
     Setup: setup,
+    TestData: testData
     Validators: []terraform.Validator{
       // A list of validation functions to test your module
       validateWebServer,
@@ -117,7 +141,10 @@ func TestWebServer(t *testing.T) {
   })
 }
 
-func validateWebServer(t *testing.T, outputs terraform.ModuleOutputs, workingDir string) {
+func validateWebServer(t *testing.T, outputs terraform.ModuleOutputs, testDataStruct interface{}, workingDir string) {
+  testData := testDataStruct.(*TestData)
+
+  randomName := testData.Name
   ...
 }
 
