@@ -59,7 +59,7 @@ type ModuleOutputs map[string]interface{}
 // A validation function to test your terraform code
 type Validator func(t *testing.T, moduleOutputs terraform.ModuleOutputs, workingDir string)
 
-type UnitTestPlan struct {
+type UnitTestConfig struct {
   TerraformOptions *terraform.Options
   // If you do not provide a working directory it will default to ./.terratest-unit-test/TEST_FUNCTION_NAME/
   WorkingDirectory string
@@ -68,7 +68,7 @@ type UnitTestPlan struct {
   Validators []Validator
 }
 
-func UnitTest(t *testing.T, testPlan *terraform.UnitTestPlan)
+func UnitTest(t *testing.T, testConfig *terraform.UnitTestConfig)
 ```
 
 Examples:
@@ -81,7 +81,7 @@ func TestWebServer(t *testing.T) {
     TerraformDir: "../web-server",
   }
 
-  terrform.UnitTest(&terraform.UnitTestPlan{
+  terrform.UnitTest(&terraform.UnitTestConfig{
     TerraformOptions: terraformOptions,
     Validators: []terraform.Validator{
       // A list of validation functions to test your module
@@ -104,7 +104,7 @@ func TestWebServer(t *testing.T) {
     TerraformDir: "../web-server",
   }
 
-  terrform.UnitTest(&terraform.UnitTestPlan{
+  terrform.UnitTest(&terraform.UnitTestConfig{
     TerraformOptions: terraformOptions,
     WorkingDirectory "../web-server",
     Setup: setup,
@@ -132,9 +132,11 @@ func setup(t *testing.T, workingDir string) {
 **_TODO: As this is a one day project I won't attempt to complete this today _**
 
 Integration tests are very similar to unit tests, only you are testing multiple modules together. To facilitate this
-terraform provides an IntegrationTest function, the main difference to the UnitTest is the IntegrationTestPlan takes a
-list of modules, each with a unique name. It passes a map of ModuleOutputs which are keyed on the unique name you gave
-the module.
+terraform provides an IntegrationTest function, the main difference to the UnitTest is the IntegrationTestConfig takes a
+list of modules, each with a unique name, and it calls a callback function in your code to create the terraform options
+as they are needed. All previously applied modules will have their outputs passed to this function so you can use
+outputs from modules applied earlier in the construction of your terraformOptions. It passes a map of ModuleOutputs 
+which are keyed on the unique name you gave the module.
 
 The destroys will be performed in the reverse order to applies.
 
@@ -151,15 +153,15 @@ type AllModuleOutputs map[string]ModuleOutputs
 
 type ModuleUnderTest struct {
   Name  string
-  TerraformOptions *terraform.Options
+  OptionsGenerator func(t *testing.T, allModuleOutputs *terraform.AllModuleOutputs, workingDir string) *terraform.Options
 }
 
-IntegrationTest(t *testing.T, testPlan *terraform.IntegrationTestPlan
+IntegrationTest(t *testing.T, testConfig *terraform.IntegrationTestConfig
 
 // A validation function to test your terraform code
 type IntegrationTestValidator func(t *testing.T, allModuleOutputs terraform.AllModuleOutputs, workingDir string)
 
-type IntegrationTestPlan struct {
+type IntegrationTestConfig struct {
   Modules []*ModuleUnderTest
   // If you do not provide a working directory it will default to ./.terratest-integration-test/TEST_FUNCTION_NAME/
   WorkingDirectory string

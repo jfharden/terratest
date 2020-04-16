@@ -112,8 +112,7 @@ func TestWebServer(t *testing.T) {
     TerraformDir: "../web-server",
   }
 
-  terraform.UnitTest(t, &terraform.UnitTestPlan{
-
+  terraform.UnitTest(t, &terraform.UnitTestConfig{
     TerraformOptions: terraformOptions,
     Validators: []terraform.Validator{
       // A list of validation functions to test your module

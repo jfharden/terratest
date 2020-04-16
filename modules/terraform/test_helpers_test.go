@@ -7,7 +7,7 @@ import (
 )
 
 func TestUnitTestSimple(t *testing.T) {
-	testPlan := &UnitTestPlan{
+	testConfig := &UnitTestConfig{
 		TerraformOptions: &Options{
 			TerraformDir: "../../examples/terraform-hello-world-example/",
 		},
@@ -16,13 +16,13 @@ func TestUnitTestSimple(t *testing.T) {
 		},
 	}
 
-	UnitTest(t, testPlan)
+	UnitTest(t, testConfig)
 }
 
 func TestUnitTestSetup(t *testing.T) {
 	setupCalled := false
 
-	testPlan := &UnitTestPlan{
+	testConfig := &UnitTestConfig{
 		TerraformOptions: &Options{
 			TerraformDir: "../../examples/terraform-hello-world-example/",
 		},
@@ -37,13 +37,13 @@ func TestUnitTestSetup(t *testing.T) {
 		},
 	}
 
-	UnitTest(t, testPlan)
+	UnitTest(t, testConfig)
 }
 
 func TestUnitTestTeardown(t *testing.T) {
 	tearDownCalled := false
 
-	testPlan := &UnitTestPlan{
+	testConfig := &UnitTestConfig{
 		TerraformOptions: &Options{
 			TerraformDir: "../../examples/terraform-hello-world-example/",
 		},
@@ -58,7 +58,7 @@ func TestUnitTestTeardown(t *testing.T) {
 		},
 	}
 
-	UnitTest(t, testPlan)
+	UnitTest(t, testConfig)
 }
 
 func validateOutput(t *testing.T, outputs ModuleOutputs, workingDir string) {
