@@ -34,11 +34,11 @@ func TestUnitTestSetup(t *testing.T) {
 		},
 		Validators: []Validator{
 			validateOutput,
-			func(t *testing.T, outputs ModuleOutputs, workingDir string) {
+			func(t *testing.T, outputs ModuleOutputs, testData interface{}, workingDir string) {
 				assert.True(t, setupCalled)
 			},
 		},
-		Setup: func(t *testing.T, workingDir string) {
+		Setup: func(t *testing.T, testData interface{}, workingDir string) {
 			setupCalled = true
 		},
 	}
@@ -55,11 +55,11 @@ func TestUnitTestTeardown(t *testing.T) {
 		},
 		Validators: []Validator{
 			validateOutput,
-			func(t *testing.T, outputs ModuleOutputs, workingDir string) {
+			func(t *testing.T, outputs ModuleOutputs, testData interface{}, workingDir string) {
 				assert.True(t, tearDownCalled)
 			},
 		},
-		TearDown: func(t *testing.T, outputs ModuleOutputs, workingDir string) {
+		TearDown: func(t *testing.T, outputs ModuleOutputs, testData interface{}, workingDir string) {
 			tearDownCalled = true
 		},
 	}
@@ -67,20 +67,24 @@ func TestUnitTestTeardown(t *testing.T) {
 	UnitTest(t, testConfig)
 }
 
-func validateOutput(t *testing.T, outputs ModuleOutputs, workingDir string) {
+func validateOutput(t *testing.T, outputs ModuleOutputs, testData interface{}, workingDir string) {
 	assert.Equal(t, "Hello, World!", outputs["hello_world"])
+}
+
+type DynamoTestData struct {
+	TableName string
+	Region    string
 }
 
 func TestUnitTestDynamoDBExample(t *testing.T) {
 	t.Parallel()
 
-	awsRegion := "eu-west-1"
-	expectedTableName := fmt.Sprintf("terratest-aws-dynamodb-example-table-%s", random.UniqueId())
+	testData := &DynamoTestData{
+		TableName: fmt.Sprintf("terratest-aws-dynamodb-example-table-%s", random.UniqueId()),
+		Region:    aws.GetRandomStableRegion(t, nil, nil),
+	}
 
 	workingDirectory := "../examples/terraform-aws-dynamodb-example"
-
-	SaveString(t, workingDirectory, "region", awsRegion)
-	SaveString(t, workingDirectory, "table_name", awsRegion)
 
 	testConfig := &UnitTestConfig{
 		WorkingDirectory: workingDirectory,
@@ -91,27 +95,27 @@ func TestUnitTestDynamoDBExample(t *testing.T) {
 
 			// Variables to pass to our Terraform code using -var options
 			Vars: map[string]interface{}{
-				"table_name": expectedTableName,
+				"table_name": testData.TableName,
 			},
 
 			// Environment variables to set when running Terraform
 			EnvVars: map[string]string{
-				"AWS_DEFAULT_REGION": awsRegion,
+				"AWS_DEFAULT_REGION": testData.Region,
 			},
 		},
 		Validators: []Validator{
 			validateDynamoDB,
 		},
+		TestData: testData,
 	}
 
 	UnitTest(t, testConfig)
 }
 
-func validateDynamoDB(t *testing.T, outputs ModuleOutputs, workingDir string) {
-	awsRegion := LoadString(t, workingDir, "region")
-	expectedTableName := LoadString(t, workingDir, "table_name")
+func validateDynamoDB(t *testing.T, outputs ModuleOutputs, dynamoTestData interface{}, workingDir string) {
+	testData := dynamoTestData.(*DynamoTestData)
 
-	expectedKmsKeyArn := aws.GetCmkArn(t, awsRegion, "alias/aws/dynamodb")
+	expectedKmsKeyArn := aws.GetCmkArn(t, testData.Region, "alias/aws/dynamodb")
 	expectedKeySchema := []*dynamodb.KeySchemaElement{
 		{AttributeName: awsSDK.String("userId"), KeyType: awsSDK.String("HASH")},
 		{AttributeName: awsSDK.String("department"), KeyType: awsSDK.String("RANGE")},
@@ -120,7 +124,7 @@ func validateDynamoDB(t *testing.T, outputs ModuleOutputs, workingDir string) {
 		{Key: awsSDK.String("Environment"), Value: awsSDK.String("production")},
 	}
 
-	table := aws.GetDynamoDBTable(t, awsRegion, expectedTableName)
+	table := aws.GetDynamoDBTable(t, testData.Region, testData.TableName)
 
 	assert.Equal(t, "ACTIVE", awsSDK.StringValue(table.TableStatus))
 	assert.ElementsMatch(t, expectedKeySchema, table.KeySchema)
@@ -131,11 +135,11 @@ func validateDynamoDB(t *testing.T, outputs ModuleOutputs, workingDir string) {
 	assert.Equal(t, "KMS", awsSDK.StringValue(table.SSEDescription.SSEType))
 
 	// Verify TTL configuration
-	ttl := aws.GetDynamoDBTableTimeToLive(t, awsRegion, expectedTableName)
+	ttl := aws.GetDynamoDBTableTimeToLive(t, testData.Region, testData.TableName)
 	assert.Equal(t, "expires", awsSDK.StringValue(ttl.AttributeName))
 	assert.Equal(t, "ENABLED", awsSDK.StringValue(ttl.TimeToLiveStatus))
 
 	// Verify resource tags
-	tags := aws.GetDynamoDbTableTags(t, awsRegion, expectedTableName)
+	tags := aws.GetDynamoDbTableTags(t, testData.Region, testData.TableName)
 	assert.ElementsMatch(t, expectedTags, tags)
 }
