@@ -34,9 +34,6 @@ func TestUnitTestSetup(t *testing.T) {
 		},
 		Validators: []Validator{
 			validateOutput,
-			func(t *testing.T, outputs ModuleOutputs, testData interface{}, workingDir string) {
-				assert.True(t, setupCalled)
-			},
 		},
 		Setup: func(t *testing.T, testData interface{}, workingDir string) {
 			setupCalled = true
@@ -44,9 +41,10 @@ func TestUnitTestSetup(t *testing.T) {
 	}
 
 	UnitTest(t, testConfig)
+	assert.True(t, setupCalled)
 }
 
-func TestUnitTestTeardown(t *testing.T) {
+func TestUnitTestTearDown(t *testing.T) {
 	tearDownCalled := false
 
 	testConfig := &UnitTestConfig{
@@ -55,9 +53,6 @@ func TestUnitTestTeardown(t *testing.T) {
 		},
 		Validators: []Validator{
 			validateOutput,
-			func(t *testing.T, outputs ModuleOutputs, testData interface{}, workingDir string) {
-				assert.True(t, tearDownCalled)
-			},
 		},
 		TearDown: func(t *testing.T, outputs ModuleOutputs, testData interface{}, workingDir string) {
 			tearDownCalled = true
@@ -65,6 +60,7 @@ func TestUnitTestTeardown(t *testing.T) {
 	}
 
 	UnitTest(t, testConfig)
+	assert.True(t, tearDownCalled)
 }
 
 func validateOutput(t *testing.T, outputs ModuleOutputs, testData interface{}, workingDir string) {
