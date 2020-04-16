@@ -1,14 +1,15 @@
-package terraform
+package test_structure
 
 import (
 	"testing"
 
+	"github.com/gruntwork-io/terratest/modules/terraform"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestUnitTestSimple(t *testing.T) {
 	testConfig := &UnitTestConfig{
-		TerraformOptions: &Options{
+		TerraformOptions: &terraform.Options{
 			TerraformDir: "../../examples/terraform-hello-world-example/",
 		},
 		Validators: []Validator{
@@ -23,7 +24,7 @@ func TestUnitTestSetup(t *testing.T) {
 	setupCalled := false
 
 	testConfig := &UnitTestConfig{
-		TerraformOptions: &Options{
+		TerraformOptions: &terraform.Options{
 			TerraformDir: "../../examples/terraform-hello-world-example/",
 		},
 		Validators: []Validator{
@@ -44,7 +45,7 @@ func TestUnitTestTeardown(t *testing.T) {
 	tearDownCalled := false
 
 	testConfig := &UnitTestConfig{
-		TerraformOptions: &Options{
+		TerraformOptions: &terraform.Options{
 			TerraformDir: "../../examples/terraform-hello-world-example/",
 		},
 		Validators: []Validator{
