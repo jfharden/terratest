@@ -107,19 +107,23 @@ Using Terratest, you can write an automated test that performs the exact same st
 
 ```go
 func TestWebServer(t *testing.T) {
-  terraformOptions := &terraform.Options {
+  terraformOptions :=  &terraform.Options {
     // The path to where your Terraform code is located
     TerraformDir: "../web-server",
-  }
+  },
 
-  // At the end of the test, run `terraform destroy`
-  defer terraform.Destroy(t, terraformOptions)
+  terrform.UnitTest(&terraform.UnitTestPlan{
+    TerraformOptions: terraformOptions,
+    Validators: []terraform.Validator{
+      // A list of validation functions to test your module
+      validateWebServer,
+    },
+  })
+}
 
-  // Run `terraform init` and `terraform apply`
-  terraform.InitAndApply(t, terraformOptions)
-
-  // Run `terraform output` to get the value of an output variable
-  url := terraform.Output(t, terraformOptions, "url")
+func validateWebServer(t *testing.T, outputs *terraform.ModuleOutputs, workingDir string) {
+  // Retrieve the URL from the terraform apply output
+  url := outputs.get("url")
 
   // Verify that we get back a 200 OK with the expected text. It
   // takes ~1 min for the Instance to boot, so retry a few times.
@@ -131,8 +135,11 @@ func TestWebServer(t *testing.T) {
 }
 ```
 
-The code above does all the steps we mentioned above, including running `terraform init`, `terraform apply`, making HTTP requests to the web server (retrying up to 15 times with 5 seconds between retries), and running `terraform destroy` (using [`defer`](https://blog.golang.org/defer-panic-and-recover) to run it at the end of the test, whether the test succeeds or fails). If you put this code in a file called `web_server_test.go`, you can run it by executing `go test`, and you’ll see output that looks like this (truncated for readability):
+The UnitTest function above does all the steps we mentioned above, including running `terraform init`, `terraform apply`, calling your validator to make HTTP requests to the web server (retrying up to 15 times with 5 seconds between retries), and running `terraform destroy` (using [`defer`](https://blog.golang.org/defer-panic-and-recover) to run it at the end of the test, whether the test succeeds or fails). You can easily add more validations by providing extra validation functions to the Validators list.
 
+If you put this code in a file called `web_server_test.go`, you can run it by executing `go test`, and you’ll see output that looks like this (truncated for readability):
+
+**_TODO: The following will have to be updated with the correct output later once the UnitTest framework is done_**
 ```
 $ go test -v
 === RUN   TestWebServer
