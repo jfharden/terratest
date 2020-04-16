@@ -107,10 +107,10 @@ Using Terratest, you can write an automated test that performs the exact same st
 
 ```go
 func TestWebServer(t *testing.T) {
-  terraformOptions :=  &terraform.Options {
+  terraformOptions := &terraform.Options {
     // The path to where your Terraform code is located
     TerraformDir: "../web-server",
-  },
+  }
 
   terrform.UnitTest(t, &terraform.UnitTestPlan{
     TerraformOptions: terraformOptions,
