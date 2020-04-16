@@ -57,14 +57,14 @@ Signature of UnitTest:
 type ModuleOutputs map[string]interface{}
 
 // A validation function to test your terraform code
-type Validator func(t *testing.T, moduleOutputs *terraform.ModuleOutputs, workingDir string)
+type Validator func(t *testing.T, moduleOutputs terraform.ModuleOutputs, workingDir string)
 
 type UnitTestPlan struct {
   TerraformOptions *terraform.Options
   // If you do not provide a working directory it will default to ./.terratest-unit-test/TEST_FUNCTION_NAME/
   WorkingDirectory string
   Setup func(t *testing.T, workingDir string)
-  TearDown func(t *testing.T, moduleOutputs *terraform.ModuleOutputs, workingDir string)
+  TearDown func(t *testing.T, moduleOutputs terraform.ModuleOutputs, workingDir string)
   Validators []Validator
 }
 
@@ -92,7 +92,7 @@ func TestWebServer(t *testing.T) {
   })
 }
 
-func validateWebServer(t *testing.T, outputs *terraform.ModuleOutputs, workingDir string) {
+func validateWebServer(t *testing.T, outputs terraform.ModuleOutputs, workingDir string) {
 }
 ```
 
@@ -117,7 +117,7 @@ func TestWebServer(t *testing.T) {
   })
 }
 
-func validateWebServer(t *testing.T, outputs *terraform.ModuleOutputs, workingDir string) {
+func validateWebServer(t *testing.T, outputs terraform.ModuleOutputs, workingDir string) {
   ...
 }
 
@@ -147,7 +147,7 @@ Signature of IntegrationTest:
 
 ```go
 // Output of every module applied, by name
-type AllModuleOutputs map[string]*ModuleOutputs
+type AllModuleOutputs map[string]ModuleOutputs
 
 type ModuleUnderTest struct {
   Name  string
@@ -157,14 +157,14 @@ type ModuleUnderTest struct {
 IntegrationTest(t *testing.T, testPlan *terraform.IntegrationTestPlan
 
 // A validation function to test your terraform code
-type IntegrationTestValidator func(t *testing.T, allModuleOutputs *terraform.AllModuleOutputs, workingDir string)
+type IntegrationTestValidator func(t *testing.T, allModuleOutputs terraform.AllModuleOutputs, workingDir string)
 
 type IntegrationTestPlan struct {
   Modules []*ModuleUnderTest
   // If you do not provide a working directory it will default to ./.terratest-integration-test/TEST_FUNCTION_NAME/
   WorkingDirectory string
   Setup func(t *testing.T, workingDir string)
-  TearDown func(t *testing.T, allModuleOutputs *terraform.AllModuleOutputs, workingDir string)
+  TearDown func(t *testing.T, allModuleOutputs terraform.AllModuleOutputs, workingDir string)
   Validators []IntegrationTestValidator
 }
 ```
